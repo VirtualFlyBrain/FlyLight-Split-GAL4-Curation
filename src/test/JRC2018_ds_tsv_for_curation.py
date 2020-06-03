@@ -1,14 +1,23 @@
 #import libraries
 import pandas as pd
+import argparse
+
+#Setup arguments for argparse
+parser = argparse.ArgumentParser(description='Accepts paper DOI and ds name and Returns a tsv file with "filename", "label", "AD:construct", "DBD:construct" and "part_of" for entry into the VFB curation interface.')
+parser.add_argument('-doi', help='A string referring to the DOI')
+parser.add_argument('-ds', type=str, help='A string to name the dataset (omit split_)')
+args = vars(parser.parse_args())
+doi = args['doi']
+ds = args['ds']
 
 #manually set doi and ds
-doi = '10.7554/elife.34272'
-ds = 'split_Namiki2018_200529'
+#doi = '10.7554/elife.34272'
+#ds = 'Namiki2018_200529'
 
 ##get all relevant data from janelia .json
 #read brain and TAG csv files made from janelia .json file
-brain_csv = pd.read_csv('JRC2018_Unisex_20X_split_fileNames1.csv')
-TAG_csv = pd.read_csv('JRC2018_VNC_Unisex_split_fileNames1.csv')
+brain_csv = pd.read_csv('/Users/alexmclachlan/Documents/GitHub/FlyLight-Split-GAL4-Curation/src/test/resources/JRC2018_Unisex_20X_split_fileNames1.csv')
+TAG_csv = pd.read_csv('/Users/alexmclachlan/Documents/GitHub/FlyLight-Split-GAL4-Curation/src/test/resources/JRC2018_VNC_Unisex_split_fileNames1.csv')
 #append TAG rows to brain rows
 names = brain_csv.append(TAG_csv)
 #tidy data by rimoving whitespaces
@@ -30,7 +39,7 @@ for i in range(len(names)):
 
 ##add AD and DBD construct columns from Gillian's split table2
 #load split table and extract relevant columns
-janelia_codes = pd.read_csv('flylight_combination_lines_2.tsv', sep='\t', index_col=False)
+janelia_codes = pd.read_csv('/Users/alexmclachlan/Documents/GitHub/FlyLight-Split-GAL4-Curation/src/test/resources/flylight_combination_lines_2.tsv', sep='\t', index_col=False)
 janelia_ext = janelia_codes[['#FL combination symbol', 'AD:construct', 'DBD:construct']]
 #merge splits table and janelia data table
 cur_tsv = pd.DataFrame.merge(names_ext, janelia_ext, how="left", left_on='publishing_name', right_on='#FL combination symbol')
@@ -42,4 +51,4 @@ cur_tsv = cur_tsv[['filename', 'label', 'AD:construct', 'DBD:construct', 'part_o
 cur_tsv = cur_tsv.rename(columns={'AD:construct':'AD', 'DBD:construct':'DBD'})
 
 #write .tsv file for curation.
-cur_tsv.to_csv(ds + '.tsv', sep = '\t', index = False)
+cur_tsv.to_csv('split_' + ds + '.tsv', sep = '\t', index = False)
