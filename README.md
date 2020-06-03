@@ -4,7 +4,7 @@ A repository for code to create curation records for Janelia FlyLight Split-GAL4
 
 **Workflow**
 
-Curation files created with this code are loaded through the [curation repo](https://github.com/VirtualFlyBrain/FlyLight-Split-GAL4-Curation).
+Curation files created with this code are loaded through the [curation repo](https://github.com/VirtualFlyBrain/curation).
 
 Working on implementing a re-useable pipeline to reduce the requirement for co-ordination, workflow to be updated.
 
