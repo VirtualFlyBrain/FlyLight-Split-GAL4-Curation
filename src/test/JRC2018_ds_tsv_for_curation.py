@@ -1,14 +1,36 @@
 #import libraries
 import pandas as pd
+import argparse
+import yaml
+from datetime import date
 
-#manually set doi and ds
-doi = '10.7554/elife.34272'
-ds = 'split_Namiki2018_200529'
+#Setup arguments for argparse to allow input of ds and doi in terminal
+#parser = argparse.ArgumentParser(description='Accepts paper DOI and ds name and Returns a tsv file with "filename", "label", "AD:construct", "DBD:construct" and "part_of" for entry into the VFB curation interface.')
+#parser.add_argument('-doi', type=str, help='A string referring to the DOI, use '|' to merge results from multiple DOIs)
+#parser.add_argument('-ds', type=str, help='A string to name the dataset (omit split_)')
+#args = vars(parser.parse_args())
+#doi = args['doi']
+#ds = args['ds']
+
+##fixed doi and ds for testing
+doi = '10.7554/eLife.04577'
+ds = 'Aso2014'
+
+##create yaml data and write file
+#yaml data
+yaml_data = dict(
+    DataSet=ds,
+    Template='JRC2018Unisex_c',
+    Imaging_type='confocal microscopy',
+    Curator='adm71')
+#write yaml file
+with open('split_' + ds + '_' + date.today().strftime('%Y%m%d')[2:8] + '.yaml', 'w') as outfile:
+    yaml.dump(yaml_data, outfile, default_flow_style=False)
 
 ##get all relevant data from janelia .json
 #read brain and TAG csv files made from janelia .json file
-brain_csv = pd.read_csv('JRC2018_Unisex_20X_split_fileNames1.csv')
-TAG_csv = pd.read_csv('JRC2018_VNC_Unisex_split_fileNames1.csv')
+brain_csv = pd.read_csv('/Users/alexmclachlan/Documents/GitHub/FlyLight-Split-GAL4-Curation/src/test/resources/JRC2018_Unisex_20X_split_fileNames1.csv')
+TAG_csv = pd.read_csv('/Users/alexmclachlan/Documents/GitHub/FlyLight-Split-GAL4-Curation/src/test/resources/JRC2018_VNC_Unisex_split_fileNames1.csv')
 #append TAG rows to brain rows
 names = brain_csv.append(TAG_csv)
 #tidy data by rimoving whitespaces
@@ -30,7 +52,7 @@ for i in range(len(names)):
 
 ##add AD and DBD construct columns from Gillian's split table2
 #load split table and extract relevant columns
-janelia_codes = pd.read_csv('flylight_combination_lines_2.tsv', sep='\t', index_col=False)
+janelia_codes = pd.read_csv('/Users/alexmclachlan/Documents/GitHub/FlyLight-Split-GAL4-Curation/src/test/resources/flylight_combination_lines_2.tsv', sep='\t', index_col=False)
 janelia_ext = janelia_codes[['#FL combination symbol', 'AD:construct', 'DBD:construct']]
 #merge splits table and janelia data table
 cur_tsv = pd.DataFrame.merge(names_ext, janelia_ext, how="left", left_on='publishing_name', right_on='#FL combination symbol')
@@ -42,4 +64,4 @@ cur_tsv = cur_tsv[['filename', 'label', 'AD:construct', 'DBD:construct', 'part_o
 cur_tsv = cur_tsv.rename(columns={'AD:construct':'AD', 'DBD:construct':'DBD'})
 
 #write .tsv file for curation.
-cur_tsv.to_csv(ds + '.tsv', sep = '\t', index = False)
+cur_tsv.to_csv('split_' + ds + '_' + date.today().strftime('%Y%m%d')[2:8] + '.tsv', sep = '\t', index = False)
