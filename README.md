@@ -1,3 +1,5 @@
+# CCF_tools [![Build Status](https://travis-ci.com/ VirtualFlyBrain/FlyLight-Split-GAL4-Curation.svg?branch=Script_Working)](https://travis-ci.com/irtualFlyBrain/FlyLight-Split-GAL4-Curation)
+
 # FlyLight Split-GAL4 Curation
 A repository for code to create curation records for Janelia FlyLight Split-GAL4 images.
 

@@ -16,15 +16,14 @@ parser.add_argument('-splits', type=str, help='path to flylight_combination_line
 parser.add_argument('-curator', type=str, help='curator name, must be in KB')
 args = vars(parser.parse_args())
 
-
 ##args for testing in ide (should be commented out)
 #args['curator'] = 'adm71'
 #args['splits'] = 'resources/flylight_combination_lines_2.tsv'
 #args['vnc'] = 'resources/JRC2018_VNC_Unisex_split_fileNames1.csv'
 #args['brain'] = 'resources/JRC2018_Unisex_20X_split_fileNames1.csv'
 #args['year'] = '2020'
-#args['ds'] = 'Hampel2015'
-#args['doi'] = '10.7554/eLife.08758'
+#args['ds'] = 'Strother2017'
+#args['doi'] = '10.1016/j.neuron.2017.03.010'
 
 #asign args to variables
 doi = args['doi']
@@ -40,7 +39,7 @@ curator = args['curator']
 #yaml data
 yaml_data = dict(
     DataSet=ds,
-    Template='JRC2018Unisex_c',
+    Template='JRC2018Unisex_c', #is this always true? Need to add the JRC2018U_VNC?
     Imaging_type='confocal microscopy',
     Curator=curator)
 #write yaml file
@@ -53,7 +52,7 @@ brain_csv = pd.read_csv(brain)
 TAG_csv = pd.read_csv(vnc)
 #append TAG rows to brain rows
 names = brain_csv.append(TAG_csv)
-#tidy data by removing whitespaces
+#tidy data by removing leading and trailing whitespaces
 names.columns = names.columns.str.strip()
 #extract only rows with appropriate doi
 names = names[names['doi'].str.contains(doi, na=False)].reset_index()
@@ -88,15 +87,17 @@ cur_tsv = pd.DataFrame.merge(names_ext, janelia_ext, how="left", left_on='publis
 cur_tsv = cur_tsv[['filename', 'label', 'AD:construct', 'DBD:construct', 'part_of']]
 #rename AD, DBD using their names
 cur_tsv = cur_tsv.rename(columns={'AD:construct':'AD', 'DBD:construct':'DBD'})
+#replace nan with ''
+cur_tsv = cur_tsv.fillna('')
 
 ##Identify rows with missing hemidrivers and save as a separate file
 #Identify rows with missing hemidrivers
-cur_missing_tsv=cur_tsv[(cur_tsv.AD == 'NOT_IN_FB') | (cur_tsv.DBD == 'NOT_IN_FB')]
+cur_missing_tsv=cur_tsv[(cur_tsv.AD == 'NOT_IN_FB') | (cur_tsv.AD == '') | (cur_tsv.DBD == 'NOT_IN_FB') | (cur_tsv.DBD == '')]
 #write missing hemis tsv for fixing when available
 if not cur_missing_tsv.empty:
     cur_missing_tsv.to_csv('Rows_with_missing_hemidrivers/split_missing_hemis_' + ds + '_' + date.today().strftime('%Y%m%d')[2:8] + '.tsv', sep = '\t', index = False)
 #remove missing rows with missing hemisdrivers from cur_tsv
-cur_tsv=cur_tsv[~(cur_tsv.AD == 'NOT_IN_FB') & ~(cur_tsv.DBD == 'NOT_IN_FB')]
+cur_tsv=cur_tsv[~(cur_tsv.AD == 'NOT_IN_FB') & ~(cur_tsv.AD == '') & ~(cur_tsv.DBD == 'NOT_IN_FB') & ~(cur_tsv.DBD == '')]
 
 #write .tsv file for curation.
 cur_tsv.to_csv('split_' + ds + '_' + date.today().strftime('%Y%m%d')[2:8] + '.tsv', sep = '\t', index = False)
