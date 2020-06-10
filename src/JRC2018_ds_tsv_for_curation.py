@@ -7,39 +7,38 @@ from datetime import date
 
 #Setup arguments for argparse to allow input of ds, doi and filepaths in terminal
 parser = argparse.ArgumentParser(description='Accepts paper DOI and ds name and pathnames to datafiles (see args). Returns a tsv file with "filename", "label", "AD:construct", "DBD:construct" and "part_of" for entry into the VFB curation interface.')
-parser.add_argument('-doi', type=str, help='A string referring to the DOI, use "|" to merge results from multiple DOIs')
-parser.add_argument('-ds', type=str, help='A string to name the dataset (omit split_)')
-parser.add_argument('-year', type=str, help='A string to be appended to the filename to indicate data batch')
-parser.add_argument('-brain', type=str, help='path to JRC2018_Unisex_20X_split_fileNames1.csv')
-parser.add_argument('-vnc', type=str, help='path to JRC2018_VNC_Unisex_split_fileNames1.csv')
-parser.add_argument('-splits', type=str, help='path to flylight_combination_lines_2.tsv')
-parser.add_argument('-curator', type=str, help='curator name, must be in KB')
+parser.add_argument('--doi', '-doi', type=str, help='A string referring to the DOI, use "|" to merge results from multiple DOIs')
+parser.add_argument('--ds', '-ds', type=str, help='A string to name the dataset (omit split_)')
+parser.add_argument('--year', '-y', type=str, help='A string to be appended to the filename to indicate data batch')
+parser.add_argument('--filenames', '-f', type=str, help='path to filenames csv (brain or vnc)')
+parser.add_argument('--splits', '-s', type=str, help='path to flylight_combination_lines_2.tsv')
+parser.add_argument('--curator', '-c', type=str, help='curator name, must be in KB')
+parser.add_argument('--template', '-t', type=str, help='curator name, must be in KB')
 args = vars(parser.parse_args())
 
 ##args for testing in ide (should be commented out)
 #args['curator'] = 'adm71'
 #args['splits'] = 'resources/flylight_combination_lines_2.tsv'
-#args['vnc'] = 'resources/JRC2018_VNC_Unisex_split_fileNames1.csv'
-#args['brain'] = 'resources/JRC2018_Unisex_20X_split_fileNames1.csv'
+#args['filenames'] = 'resources/JRC2018_Unisex_20X_split_fileNames1.csv'
 #args['year'] = '2020'
 #args['ds'] = 'Strother2017'
 #args['doi'] = '10.1016/j.neuron.2017.03.010'
+#args['template'] = 'JRC2018Unisex_c'
 
 #asign args to variables
 doi = args['doi']
 ds = args['ds']
 year = args['year']
-brain = args['brain']
-vnc = args['vnc']
+filenames = args['filenames']
 splits = args['splits']
 curator = args['curator']
-
+template = args['template']
 
 ##create yaml data and write file
 #yaml data
 yaml_data = dict(
     DataSet=ds,
-    Template='JRC2018Unisex_c', #is this always true? Need to add the JRC2018U_VNC?
+    Template=template,
     Imaging_type='confocal microscopy',
     Curator=curator)
 #write yaml file
@@ -48,16 +47,13 @@ with open('split_' + ds + '_' + date.today().strftime('%Y%m%d')[2:8] + '.yaml', 
 
 ##get all relevant data from janelia .json
 #read brain and TAG csv files made from janelia .json file
-brain_csv = pd.read_csv(brain)
-TAG_csv = pd.read_csv(vnc)
-#append TAG rows to brain rows
-names = brain_csv.append(TAG_csv)
+filenames = pd.read_csv(filenames)
 #tidy data by removing leading and trailing whitespaces
-names.columns = names.columns.str.strip()
+filenames.columns = filenames.columns.str.strip()
 #extract only rows with appropriate doi
-names = names[names['doi'].str.contains(doi, na=False)].reset_index()
+filenames = filenames[filenames['doi'].str.contains(doi, na=False)].reset_index()
 #extract relevant columns
-names_ext = names[['filename', 'publishing_name', 'ad', 'dbd', 'gender', 'area']]
+names_ext = filenames[['filename', 'publishing_name', 'ad', 'dbd', 'gender', 'area']]
 ##add label
 #add info from fields
 names_ext['label']= 'JRC_' + names_ext['publishing_name'] + '_' + names_ext['area'] + '_' + year +'_'
@@ -69,13 +65,23 @@ names_ext['label']= names_ext['label'] + '_' + names_ext['dup_number']
 
 ##add part_of column
 #add blank part_of column
-names_ext['part_of']='nan'
-#fill part_of column with terms based on 'area' column of janelia .json
-for i in range(len(names)):
+names_ext['part_of']='nan' #fillna('')
+#fill part_of column with terms based on 'gender' column of janelia .json
+for i in range(len(names_ext)):
+    if names_ext['gender'][i] == 'Female':
+        names_ext['part_of'][i]='female organism|'
+    elif names_ext['gender'][i] == 'Male':
+        names_ext['part_of'][i]='male organism|'
+    else:
+        print('an image is not of a male or female')
+#fill part_of column with terms based on 'gender' column of janelia .json
+for i in range(len(names_ext)):
     if names_ext['area'][i] == 'Brain':
-        names_ext['part_of'][i]='female organism|adult brain'
+        names_ext['part_of'][i]= names_ext['part_of'][i] + 'adult brain'
     elif names_ext['area'][i] == 'VNC':
-        names_ext['part_of'][i]='female organism|thoracico-abdominal ganglion'
+        names_ext['part_of'][i]= names_ext['part_of'][i] + 'thoracico-abdominal ganglion'
+    else:
+        print('an image is not of the VNS or brain')
 
 ##add AD and DBD construct columns from Gillian's split table2
 #load split table and extract relevant columns

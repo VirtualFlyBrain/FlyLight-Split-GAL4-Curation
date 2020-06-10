@@ -11,12 +11,12 @@ script:
 
 env:
   global:
-    - brain=resources/JRC2018_Unisex_20X_split_fileNames1.csv
-    - vnc=resources/JRC2018_VNC_Unisex_split_fileNames1.csv
-    - splits=resources/flylight_combination_lines_2.tsv
-    - year=2020
-    - curator=adm71
+    -- splits=./resources/flylight_combination_lines_2.tsv
+    -- year=2020
+    -- curator=adm71
+    -- template=JRC2018Unisex_c
   jobs:
+    -- filenames=./resources/JRC2018_Unisex_20X_split_fileNames1.csv
     - doi=10.1002/cne.24512 ds=Wolff2018
     - doi=10.1016/j.cell.2017.06.032 ds=Robie2017
     - doi=10.1016/j.neuron.2017.03.010 ds=Strother2017
