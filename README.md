@@ -1,4 +1,4 @@
-# FlyLight-Split-GAL4-Curation [![Build Status](https://travis-ci.org/VirtualFlyBrain/FlyLight-Split-GAL4-Curation.svg?branch=master)](https://travis-ci.org/VirtualFlyBrain/FlyLight-Split-GAL4-Curation)
+# FlyLight-Split-GAL4-Curation [![Build Status](https://travis-ci.org/VirtualFlyBrain/FlyLight-Split-GAL4-Curation.svg?branch=Script-Working)](https://travis-ci.org/VirtualFlyBrain/FlyLight-Split-GAL4-Curation)
 
 A repository for code to create curation records for Janelia FlyLight Split-GAL4 images.
 
