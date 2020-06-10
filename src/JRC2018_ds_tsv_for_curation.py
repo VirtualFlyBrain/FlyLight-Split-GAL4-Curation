@@ -101,7 +101,7 @@ cur_tsv = cur_tsv.fillna('')
 cur_missing_tsv=cur_tsv[(cur_tsv.AD == 'NOT_IN_FB') | (cur_tsv.AD == '') | (cur_tsv.DBD == 'NOT_IN_FB') | (cur_tsv.DBD == '')]
 #write missing hemis tsv for fixing when available
 if not cur_missing_tsv.empty:
-    cur_missing_tsv.to_csv('Rows_with_missing_hemidrivers/split_missing_hemis_' + ds + '_' + date.today().strftime('%Y%m%d')[2:8] + '.tsv', sep = '\t', index = False)
+    cur_missing_tsv.to_csv('split_missing_hemis_' + ds + '_' + date.today().strftime('%Y%m%d')[2:8] + '.tsv', sep = '\t', index = False)
 #remove missing rows with missing hemisdrivers from cur_tsv
 cur_tsv=cur_tsv[~(cur_tsv.AD == 'NOT_IN_FB') & ~(cur_tsv.AD == '') & ~(cur_tsv.DBD == 'NOT_IN_FB') & ~(cur_tsv.DBD == '')]
 
