@@ -7,23 +7,4 @@ install:
   - pip install -r requirements.txt
   
 script:
-  - python ./src/JRC2018_ds_tsv_for_curation.py 
-
-env:
-  global:
-    -- splits='resources/flylight_combination_lines_2.tsv'
-    -- filenames='resources/JRC2018_Unisex_20X_split_fileNames1.csv'
-    -- year='2020'
-    -- curator='adm71'
-    -- template='JRC2018Unisex_c'
-  jobs:
-    - doi='10.1002/cne.24512' ds='Wolff2018'
-    - doi='10.1016/j.cell.2017.06.032' ds='Robie2017'
-    - doi='10.1016/j.neuron.2017.03.010' ds='Strother2017'
-    - doi='10.1038/nature24626' ds='Klapoetke2017'
-    - doi='10.1101/404277|10.7554/eLife.43079' ds='Dolan2019'
-    - doi='10.7554/eLife.04577' ds='Aso2014'
-    - doi='10.7554/eLife.08758' ds='Hampel2015'
-    - doi='10.7554/eLife.16135' ds='AsoRubin2016'
-    - doi='10.7554/eLife.21022' ds='Wu2016'
-    - doi='10.7554/elife.34272' ds='Namiki2018'
+  - python ./src/JRC2018_ds_tsv_for_curation.py --splits resources/flylight_combination_lines_2.tsv --filenames resources/JRC2018_Unisex_20X_split_fileNames1.csv --year 2020 --curator adm71 --template JRC2018Unisex_c --doi 10.1016/j.neuron.2017.03.010 --ds Strother2017
