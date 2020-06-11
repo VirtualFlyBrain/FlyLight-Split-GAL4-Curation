@@ -6,6 +6,9 @@ A repository for code to create curation records for Janelia FlyLight Split-GAL4
 
 Python script for creating curation record tsv files for a given doi and ds name and datafiles from Janelia FlyLight API along with Gillian's FlyLight combination lines tsv file.
 
+'src/problem_records/' contains records being held either because the kb isn't ready or information required for loading is missing.
+
+
 **Git Workflow**
 
 Current:
