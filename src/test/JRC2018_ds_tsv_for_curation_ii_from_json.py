@@ -18,8 +18,8 @@ from datetime import date
 #args = vars(parser.parse_args())
 
 ##args for testing in ide (should be commented out)
-doi = '10.1016/j.cub.2020.07.083'
-ds = 'Wang2020'
+doi = '10.7554/eLife.04577'
+ds = 'Aso2014'
 year = '2020'
 #filenames = 
 splits = '/Users/adm71/Documents/GitHub/FlyLight-Split-GAL4-Curation/src/resources/flylight_combination_lines_2.tsv'
@@ -119,5 +119,5 @@ if not cur_missing_tsv.empty:
 cur_tsv=cur_tsv[~(cur_tsv.AD == 'NOT_IN_FB') & ~(cur_tsv.AD == '') & ~(cur_tsv.DBD == 'NOT_IN_FB') & ~(cur_tsv.DBD == '')]
 
 #write .tsv file for curation. Using names ext for now as lacking hemidrivers
-#cur_tsv.to_csv('split_' + ds + '_' + date.today().strftime('%Y%m%d')[2:8] + '.tsv', sep = '\t', index = False)
-names_ext.to_csv('split_' + ds + '_' + date.today().strftime('%Y%m%d')[2:8] + '.tsv', sep = '\t', index = False)
+cur_tsv.to_csv('split_' + ds + '_' + date.today().strftime('%Y%m%d')[2:8] + '.tsv', sep = '\t', index = False)
+names_ext.to_csv('allsplit_' + ds + '_' + date.today().strftime('%Y%m%d')[2:8] + '.tsv', sep = '\t', index = False)
