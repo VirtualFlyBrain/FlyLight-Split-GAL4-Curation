@@ -12,16 +12,16 @@ from datetime import date
 #parser.add_argument('--doi', '-doi', type=str, help='A string referring to the DOI, use "|" to merge results from multiple DOIs')
 #parser.add_argument('--year', '-y', type=str, help='A string to be appended to the filename to indicate data batch')
 #parser.add_argument('--ds', '-ds', type=str, help='A string to name the dataset (omit split_)')
-#parser.add_argument('--filenames', '-f', type=str, help='path to filenames csv (brain or vnc)')
+#parser.add_argument('--janelia_json', '-f', type=str, help='path to most recent janelia json')
 #parser.add_argument('--splits', '-s', type=str, help='path to flylight_combination_lines_2.tsv')
 #parser.add_argument('--curator', '-c', type=str, help='curator name, must be in KB')
 #args = vars(parser.parse_args())
 
 ##args for testing in ide (should be commented out)
-doi = '10.7554/eLife.04577'
-ds = 'Aso2014'
-year = '2020'
-#filenames = 
+doi = '10.7554/elife.34272'
+ds = 'Namiki2018'
+year = '2018'
+janelia_json = '/Users/adm71/Documents/GitHub/Management/Janelia/JaneliaWorkstationAPI/vfb_images_2020_09_11.json.gz'
 splits = '/Users/adm71/Documents/GitHub/FlyLight-Split-GAL4-Curation/src/resources/flylight_combination_lines_2.tsv'
 curator = 'adm71'
 
@@ -29,7 +29,7 @@ curator = 'adm71'
 #doi = args['doi']
 #ds = args['ds']
 #year = args['year']
-#filenames = args['filenames']
+#janelia_json = args['filenames']
 #splits = args['splits']
 #curator = args['curator']
 
@@ -44,39 +44,50 @@ with open('split_' + ds + '_' + date.today().strftime('%Y%m%d')[2:8] + '.yaml', 
     yaml.dump(yaml_data, outfile, default_flow_style=False)
 
 ##get all relevant data from janelia .json
-#read brain and TAG csv files made from janelia .json file
-#filenames = pd.read_csv(filenames)
-#tidy data by removing leading and trailing whitespaces
-#filenames.columns = filenames.columns.str.strip()
 #extract only rows with appropriate doi
-#filenames = filenames[filenames['doi'].str.contains(doi, na=False)].reset_index()
-with gzip.open('/Users/adm71/Documents/GitHub/Management/Janelia/JaneliaWorkstationAPI/vfb_images_2020_09_11.json.gz') as f:
+with gzip.open(janelia_json) as f:
    current_data = json.load(f)
 
 janelia_df=pd.DataFrame(current_data['images'])
+
 #extract only rows with appropriate doi
 janelia_df = janelia_df[janelia_df['doi'].str.contains(doi, na=False)].reset_index()
 
 #extract relevant columns
-names_ext = janelia_df[['publishing_name', 'ad', 'dbd', 'gender', 'area', 'slide_code']]
-#add missing filename column
-names_ext['filename']=''
+names_ext = janelia_df[['publishing_name', 'ad', 'dbd', 'gender', 'area', 'slide_code', 'objective', 'sampleId']]
+
 ##add label
-#add info from fields
+#add info from fields to label
 names_ext['label']= 'JRC_' + names_ext['publishing_name'] + '_' + names_ext['area'] + '_' + year +'_' + names_ext['slide_code']
-#remove slide code field
-names_ext = names_ext.drop(['slide_code'], axis=1)
+#fill filename column with 'objective-area-sampleid'
+names_ext['filename']=names_ext['objective'] + '-' + names_ext['area'] + '-' +  names_ext['sampleId']
+
+
+##extract unique brains, taking 63x over 20x where possible
+#split out brain
+names_ext_b=names_ext[names_ext['area'].str.contains('Brain')]
+names_ext_b=names_ext_b.sort_values(by='objective')
+names_ext_b=names_ext_b.drop_duplicates('label', keep='last')
+
+#split out VNC
+names_ext_v=names_ext[names_ext['area'].str.contains('VNC')]
+names_ext_v=names_ext_v.sort_values(by='objective')
+names_ext_v=names_ext_v.drop_duplicates('label', keep='last')
+
+#concat back
+names_ext=pd.concat([names_ext_b, names_ext_v]).reset_index()
 
 ##add part_of column
-#add blank part_of column
+#add blank columns
 names_ext['part_of']='' #fillna('')
-names_ext['template']=''
+names_ext['Template']=''
+
 #fill template column with terms based on 'area' column of janelia .json
 for i in range(len(names_ext)):
     if names_ext['area'][i] == 'Brain':
-        names_ext['template'][i]= 'JRC2018Unisex_c'
+        names_ext['Template'][i]= 'JRC2018Unisex_c'
     elif names_ext['area'][i] == 'VNC':
-        names_ext['template'][i]= 'JRC2018UnisexVNC_c'
+        names_ext['Template'][i]= 'JRC2018UnisexVNC_c'
     else:
         print('an image is not of the VNS or brain')
 #fill part_of column with terms based on 'gender' column of janelia .json
@@ -92,7 +103,7 @@ for i in range(len(names_ext)):
     if names_ext['area'][i] == 'Brain':
         names_ext['part_of'][i]= names_ext['part_of'][i] + 'adult brain'
     elif names_ext['area'][i] == 'VNC':
-        names_ext['part_of'][i]= names_ext['part_of'][i] + 'thoracico-abdominal ganglion'
+        names_ext['part_of'][i]= names_ext['part_of'][i] + 'adult ventral nervous system'
     else:
         print('an image is not of the VNS or brain')
 
@@ -103,7 +114,7 @@ janelia_ext = janelia_codes[['#FL combination symbol', 'AD:construct', 'DBD:cons
 #merge splits table and janelia data table
 cur_tsv = pd.DataFrame.merge(names_ext, janelia_ext, how="left", left_on='publishing_name', right_on='#FL combination symbol')
 #extract columns required for curation tsv file
-cur_tsv = cur_tsv[['filename', 'label', 'AD:construct', 'DBD:construct', 'part_of', 'template']]
+cur_tsv = cur_tsv[['filename', 'label', 'AD:construct', 'DBD:construct', 'part_of', 'Template']]
 #rename AD, DBD using their names
 cur_tsv = cur_tsv.rename(columns={'AD:construct':'AD', 'DBD:construct':'DBD'})
 #replace nan with ''

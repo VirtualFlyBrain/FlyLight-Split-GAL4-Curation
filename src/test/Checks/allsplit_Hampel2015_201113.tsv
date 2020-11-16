@@ -1,0 +1,5 @@
+index	publishing_name	ad	dbd	gender	area	slide_code	objective	sampleId	label	filename	part_of	Template
+0	spGAL4 control			Female	Brain	20141222_80_A3	20x	2110272527384182882	JRC_spGAL4 control_Brain_2015_20141222_80_A3	20x-Brain-2110272527384182882	female organism|adult brain	JRC2018Unisex_c
+2	spGAL4 control			Female	Brain	20141222_80_A4	20x	2110272530890621026	JRC_spGAL4 control_Brain_2015_20141222_80_A4	20x-Brain-2110272530890621026	female organism|adult brain	JRC2018Unisex_c
+1	spGAL4 control			Female	VNC	20141222_80_A3	20x	2110272527384182882	JRC_spGAL4 control_VNC_2015_20141222_80_A3	20x-VNC-2110272527384182882	female organism|adult ventral nervous system	JRC2018UnisexVNC_c
+3	spGAL4 control			Female	VNC	20141222_80_A4	20x	2110272530890621026	JRC_spGAL4 control_VNC_2015_20141222_80_A4	20x-VNC-2110272530890621026	female organism|adult ventral nervous system	JRC2018UnisexVNC_c
