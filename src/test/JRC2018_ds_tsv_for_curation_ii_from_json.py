@@ -4,7 +4,6 @@ pd.options.mode.chained_assignment = None  # default='warn'
 import argparse
 import yaml
 import json
-import gzip
 from datetime import date
 
 #Setup arguments for argparse to allow input of ds, doi and filepaths in terminal
@@ -21,8 +20,9 @@ from datetime import date
 doi = '10.7554/elife.34272'
 ds = 'Namiki2018'
 year = '2018'
-janelia_json = '/Users/adm71/Documents/GitHub/Management/Janelia/JaneliaWorkstationAPI/vfb_images_2020_09_11.json.gz'
-splits = '/Users/adm71/Documents/GitHub/FlyLight-Split-GAL4-Curation/src/resources/flylight_combination_lines_2.tsv'
+janelia_json_new = '/Users/alexmclachlan/Downloads/janelia_2020_12_15.json'
+splits = '/Users/alexmclachlan/Documents/GitHub/FlyLight-Split-GAL4-Curation/src/resources/flylight_combination_lines_2.tsv'
+stochastic_effectors = '/Users/alexmclachlan/Documents/GitHub/FlyLight-Split-GAL4-Curation/src/resources/stochastic_effectors_list_01_2021.tsv'
 curator = 'adm71'
 
 #asign args to variables
@@ -45,7 +45,7 @@ with open('split_' + ds + '_' + date.today().strftime('%Y%m%d')[2:8] + '.yaml', 
 
 ##get all relevant data from janelia .json
 #extract only rows with appropriate doi
-with gzip.open(janelia_json) as f:
+with open(janelia_json_new) as f:
    current_data = json.load(f)
 
 janelia_df=pd.DataFrame(current_data['images'])
@@ -54,7 +54,17 @@ janelia_df=pd.DataFrame(current_data['images'])
 janelia_df = janelia_df[janelia_df['doi'].str.contains(doi, na=False)].reset_index()
 
 #extract relevant columns
-names_ext = janelia_df[['publishing_name', 'ad', 'dbd', 'gender', 'area', 'slide_code', 'objective', 'sampleId']]
+names_ext = janelia_df[['publishing_name', 'ad', 'dbd', 'gender', 'area', 'slide_code', 'objective', 'sampleId', 'tile', 'age', 'published_externally', 'effector']]
+
+#remove rows where 'published_externally' does not = 1
+names_ext = names_ext[names_ext['publishing_name'].str.contains('1', na=False)].reset_index()
+
+##remove stochastic effectors.
+#load stochastic_effectors tsv file to df
+stochastic_effectors=pd.read_csv(stochastic_effectors, sep='\t', index_col=False)
+#drop rows with effectors matching any of the stochastic_effectors
+names_ext[~names_ext['effector'].str.contains(list(stochastic_effectors['Effector']))] #TODO fix this to work with a list somehow
+
 
 ##add label
 #add info from fields to label
