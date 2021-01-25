@@ -17,9 +17,9 @@ from datetime import date
 #args = vars(parser.parse_args())
 
 ##args for testing in ide (should be commented out)
-doi = '10.7554/elife.34272'
-ds = 'Namiki2018'
-year = '2018'
+doi = '10.7554/eLife.04577'
+ds = 'Aso2014'
+year = '2014'
 janelia_json_new = '/Users/alexmclachlan/Downloads/janelia_2020_12_15.json'
 splits = '/Users/alexmclachlan/Documents/GitHub/FlyLight-Split-GAL4-Curation/src/resources/flylight_combination_lines_2.tsv'
 stochastic_effectors = '/Users/alexmclachlan/Documents/GitHub/FlyLight-Split-GAL4-Curation/src/resources/stochastic_effectors_list_01_2021.tsv'
@@ -56,15 +56,17 @@ janelia_df = janelia_df[janelia_df['doi'].str.contains(doi, na=False)].reset_ind
 #extract relevant columns
 names_ext = janelia_df[['publishing_name', 'ad', 'dbd', 'gender', 'area', 'slide_code', 'objective', 'sampleId', 'tile', 'age', 'published_externally', 'effector']]
 
-#remove rows where 'published_externally' does not = 1
-names_ext = names_ext[names_ext['publishing_name'].str.contains('1', na=False)].reset_index()
+#remove rows where 'published_externally' does not = 1 (confirmed working as values are either '1' or None)
+names_ext = names_ext[names_ext['published_externally'].str.contains('1', na=False)]
 
 ##remove stochastic effectors.
 #load stochastic_effectors tsv file to df
 stochastic_effectors=pd.read_csv(stochastic_effectors, sep='\t', index_col=False)
 #drop rows with effectors matching any of the stochastic_effectors
-names_ext[~names_ext['effector'].str.contains(list(stochastic_effectors['Effector']))] #TODO fix this to work with a list somehow
+names_ext=names_ext[~names_ext['effector'].str.contains('|'.join(list(stochastic_effectors['Effector'])))]
 
+#fillna in 'tile'
+names_ext['tile']=names_ext['tile'].fillna('null')
 
 ##add label
 #add info from fields to label
@@ -73,19 +75,34 @@ names_ext['label']= 'JRC_' + names_ext['publishing_name'] + '_' + names_ext['are
 names_ext['filename']=names_ext['objective'] + '-' + names_ext['area'] + '-' +  names_ext['sampleId']
 
 
-##extract unique brains, taking 63x over 20x where possible
-#split out brain
+##extract unique brains, taking 20x and 63x when ALL of left_dorsal, ventral, right_dorsal tiles exist
+#split out brain TODO report if any images are 40x
 names_ext_b=names_ext[names_ext['area'].str.contains('Brain')]
-names_ext_b=names_ext_b.sort_values(by='objective')
-names_ext_b=names_ext_b.drop_duplicates('label', keep='last')
+names_ext_b_20x=names_ext_b[names_ext_b['objective'].str.contains('20x')]
+names_ext_b_63x=names_ext_b[names_ext_b['objective'].str.contains('63x')].drop_duplicates()
+names_ext_b_63x_full=names_ext_b_63x.groupby(names_ext_b_63x['slide_code']).aggregate({'tile' : ', '.join})
+names_ext_b_63x_full=names_ext_b_63x_full[names_ext_b_63x_full['tile'].str.contains(r'(?=.*left_dorsal)(?=.*right_dorsal)(?=.*ventral)(?=.*null)',regex=True)]
+names_ext_b_63x_full['tile'] = names_ext_b_63x_full['tile'].str.replace(r'\, null', '')
+names_ext_b_63x_full['slide_code']=names_ext_b_63x_full.index
+names_ext_b_63x_full.index.name = None
 
-#split out VNC
+names_ext_b_63x=names_ext_b_63x.drop(['tile'], axis=1)
+names_ext_b_63x=names_ext_b_63x.drop_duplicates()
+
+
+names_ext_b_63x_full=names_ext_b_63x_full.merge(names_ext_b_63x, how='left', on='slide_code')
+
+
+#TODO check tiles for each slide_code in 63x to check if all 3 tiles exist.
+
+#split out VNC TODO report if any VNC images are not 20x, for now just takes 63x over 20x if 63x exists so should be visible in tsvs
 names_ext_v=names_ext[names_ext['area'].str.contains('VNC')]
-names_ext_v=names_ext_v.sort_values(by='objective')
-names_ext_v=names_ext_v.drop_duplicates('label', keep='last')
+#names_ext_v=names_ext_v.sort_values(by='objective')
+#names_ext_v=names_ext_v.drop_duplicates('label', keep='last')
+names_ext_v=names_ext_v[names_ext_v['objective'].str.contains('20x')]
 
 #concat back
-names_ext=pd.concat([names_ext_b, names_ext_v]).reset_index()
+names_ext=pd.concat([names_ext_b_20x, names_ext_b_63x_full, names_ext_v]).reset_index()
 
 ##add part_of column
 #add blank columns
